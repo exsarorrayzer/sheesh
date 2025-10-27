@@ -1,5 +1,8 @@
 {
-  "name": "sheesh",
+  "name": "Sheesh Obfuscator",
   "version": "v1.0",
-  "author": "exsarorrayzer"
+  "author": "exsarorrayzer",
+  "license": "MIT",
+  "description": "Advanced Obsfucator Tool",
+  "github": "https://github.com/exsarorrayzer/sheesh"
 }
