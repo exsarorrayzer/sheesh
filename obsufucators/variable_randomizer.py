@@ -8,7 +8,7 @@ class VarRandomizer(ast.NodeTransformer):
         super().__init__()
         self.mapping = {}
 
-    def _rand_name(self, length=8):
+    def _rand_name(self, length=32):
         return "".join(random.choices(string.ascii_letters, k=length))
 
     def visit_Name(self, node: ast.Name):
