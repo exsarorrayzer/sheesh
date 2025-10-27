@@ -6,18 +6,14 @@ from pathlib import Path
 import pyfiglet
 from colorama import init, Style
 
-init(autoreset=True)
+init()
 
-def rgb(r, g, b, text):
-    return f"\033[38;2;{r};{g};{b}m{text}{Style.RESET_ALL}"
+def rgb_escape(r, g, b):
+    return f"\033[38;2;{r};{g};{b}m"
 
-def glide_print(lines, delay=0.02):
-    term_width = os.get_terminal_size().columns
-    for offset in range(term_width):
-        sys.stdout.write("\r" + " " * offset + lines)
-        sys.stdout.flush()
-        time.sleep(delay / 5)
-    print()
+def clear_lines(n):
+    for _ in range(n):
+        sys.stdout.write("\033[F\033[K")
 
 def show_banner():
     base = Path(__file__).resolve().parent
@@ -34,28 +30,40 @@ def show_banner():
     fig = pyfiglet.Figlet(font="bloody")
     banner = fig.renderText(text)
     lines = banner.splitlines()
+    line_count = len(lines) + 3
 
     shades = [
-        (255, 0, 0),
-        (235, 20, 20),
-        (210, 10, 10),
-        (255, 40, 40),
+        (255, 10, 10),
+        (235, 30, 30),
+        (210, 20, 20),
+        (255, 40, 20),
         (240, 5, 5),
         (255, 80, 20)
     ]
 
-    os.system("cls" if os.name == "nt" else "clear")
+    try:
+        cols = os.get_terminal_size().columns
+    except Exception:
+        cols = 80
 
-    for i in range(4):
-        r, g, b = shades[i % len(shades)]
-        colored = "\n".join([rgb(r, g, b, line) for line in lines])
-        glide_print(colored, delay=0.01)
-        time.sleep(0.18)
-        os.system("cls" if os.name == "nt" else "clear")
-
-    final_banner = "\n".join([rgb(255, 30, 30, line) for line in lines])
-    print(final_banner)
-    print(rgb(255, 60, 60, "      ───────────────────────────────"))
-    print(rgb(255, 30, 30, f"           Sheesh Obfuscator {version}"))
-    print(rgb(255, 60, 60, "      ───────────────────────────────"))
+    cycles = 4
+    delay = 0.08
+    for cycle in range(cycles):
+        r, g, b = shades[cycle % len(shades)]
+        esc = rgb_escape(r, g, b)
+        for shift in range(0, max(1, min(10, cols//20))):
+            prefix = " " * shift
+            for ln in lines:
+                sys.stdout.write(esc + prefix + ln + Style.RESET_ALL + "\n")
+            sys.stdout.write(esc + prefix + "      ───────────────────────────────" + Style.RESET_ALL + "\n")
+            sys.stdout.write(esc + prefix + f"           Sheesh Obfuscator {version}" + Style.RESET_ALL + "\n")
+            sys.stdout.flush()
+            time.sleep(delay)
+            clear_lines(line_count)
+    esc = rgb_escape(255, 20, 20)
+    for ln in lines:
+        sys.stdout.write(esc + ln + Style.RESET_ALL + "\n")
+    sys.stdout.write(esc + "      ───────────────────────────────" + Style.RESET_ALL + "\n")
+    sys.stdout.write(esc + f"           Sheesh Obfuscator {version}" + Style.RESET_ALL + "\n")
+    sys.stdout.flush()
     time.sleep(0.5)
