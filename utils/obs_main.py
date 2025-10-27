@@ -3,9 +3,9 @@ from pathlib import Path
 from importlib import util
 
 try:
-    from prompt_toolkit.shortcuts import radiolist_dialog, input_dialog, yes_no_dialog, message_dialog
-except ImportError:
-    print("[!] prompt_toolkit is required for arrow-key menu. Install via: pip install prompt_toolkit")
+    from pick import pick
+except Exception:
+    print("[!] 'pick' is required for arrow-key menu. Install via: pip install pick")
     sys.exit(1)
 
 BASE = Path(__file__).resolve().parent.parent
@@ -43,44 +43,45 @@ def apply_module_safe(source, module_name):
         print(f"[!] error in {module_name}: {e}")
         return source
 
-def start_menu():
-    choices = [
+def choose_encrypt_method():
+    options = [
         ("base64", "Base64"),
         ("hash", "Hash"),
         ("marshall", "Marshall"),
         ("zlib", "Zlib"),
         ("all", "All (recommended)")
     ]
+    labels = [lbl for _, lbl in options]
+    option, index = pick(labels, "Select encrypt method:", indicator="=>")
+    return options[index][0]
 
-    result = radiolist_dialog(
-        title="Sheesh - Encrypt Menu",
-        text="Select encrypt method:",
-        values=choices,
-        ok_text="Select",
-        cancel_text="Exit"
-    ).run()
-    if result is None:
+def yes_no_prompt(prompt_text):
+    labels = ["Yes", "No"]
+    _, idx = pick(labels, prompt_text, indicator="=>")
+    return idx == 0
+
+def start_menu():
+    method = choose_encrypt_method()
+    try:
+        file_path = input("Path to .py file to obfuscate: ").strip()
+    except (EOFError, KeyboardInterrupt):
         return
-
-    file_path = input_dialog(title="Input", text="Path to .py file to obfuscate:").run()
     if not file_path:
         return
-
     try:
         fp = Path(file_path).expanduser().resolve()
     except Exception:
-        message_dialog(title="Error", text="Invalid path").run()
+        print("Invalid path")
         return
     if not fp.exists() or fp.suffix.lower() != ".py":
-        message_dialog(title="Error", text="File must exist and be a .py file").run()
+        print("File must exist and be a .py file")
         return
     try:
         src = fp.read_text(encoding="utf-8")
     except Exception as e:
-        message_dialog(title="Error", text=f"Cannot read file: {e}").run()
+        print(f"Cannot read file: {e}")
         return
 
-    # Default pipeline
     pipeline = [
         "comment_remover",
         "variable_randomizer",
@@ -91,18 +92,16 @@ def start_menu():
     for mod in pipeline:
         data = apply_module_safe(data, mod)
 
-    # Encrypt methods
     encrypt_order = []
-    if result == "all":
+    if method == "all":
         encrypt_order = ["base64", "hash", "marshall", "zlib"]
     else:
-        encrypt_order = [result]
+        encrypt_order = [method]
 
     for enc in encrypt_order:
         data = apply_module_safe(data, enc)
 
-    # Optional print remover
-    yn = yes_no_dialog(title="Print Remove", text="Remove all print() calls?").run()
+    yn = yes_no_prompt("Remove all print() calls?")
     if yn:
         data = apply_module_safe(data, "print_hider")
 
@@ -111,6 +110,6 @@ def start_menu():
     try:
         out_path.write_text(data, encoding="utf-8")
     except Exception as e:
-        message_dialog(title="Error", text=f"Cannot write result: {e}").run()
+        print(f"Cannot write result: {e}")
         return
-    message_dialog(title="Done", text=f"Obfuscated file written to:\n{out_path}").run()
+    print(f"Obfuscated file written to: {out_path}")
