@@ -1,34 +1,51 @@
-# obsufucators/class_randomizer.py
 import ast
 import random
 import string
+import builtins
 
 class ClassRandomizer(ast.NodeTransformer):
     def __init__(self):
         super().__init__()
         self.mapping = {}
+        self.imported = set()
+        self.builtins = set(dir(builtins))
 
-    def _rand_name(self, length=10):
-        return ''.join(random.choices(string.ascii_letters, k=length))
+    def _rand(self, n=8):
+        return "".join(random.choices(string.ascii_letters, k=n))
 
-    def visit_ClassDef(self, node: ast.ClassDef):
-        if node.name not in self.mapping:
-            self.mapping[node.name] = self._rand_name()
-        node.name = self.mapping[node.name]
+    def visit_Import(self, node):
+        for alias in node.names:
+            asn = alias.asname if alias.asname else alias.name.split(".")[0]
+            self.imported.add(asn)
+        return node
+
+    def visit_ImportFrom(self, node):
+        for alias in node.names:
+            asn = alias.asname if alias.asname else alias.name
+            self.imported.add(asn)
+        return node
+
+    def visit_ClassDef(self, node):
+        old_name = node.name
+        if old_name not in self.imported and old_name not in self.builtins:
+            new_name = self._rand(max(6, min(12, len(old_name))))
+            self.mapping[old_name] = new_name
+            node.name = new_name
         self.generic_visit(node)
         return node
 
-    def visit_Name(self, node: ast.Name):
+    def visit_Name(self, node):
         if node.id in self.mapping:
             node.id = self.mapping[node.id]
         return node
 
 def obfuscate(source: str) -> str:
     tree = ast.parse(source)
-    tree = ClassRandomizer().visit(tree)
+    cr = ClassRandomizer()
+    tree = cr.visit(tree)
     ast.fix_missing_locations(tree)
     try:
         new_source = ast.unparse(tree)
-    except AttributeError:
+    except Exception:
         raise RuntimeError("ast.unparse required (Python 3.9+)")
     return new_source
