@@ -33,7 +33,7 @@ PALETTE = [
 def _ansi_rgb(r, g, b):
     return f"\033[38;2;{r};{g};{b}m"
 
-def _color_text(text, idx):
+def _col(text, idx):
     if Style is None:
         return text
     r, g, b = PALETTE[idx % len(PALETTE)]
@@ -69,18 +69,22 @@ def apply_module_safe(source, module_name):
         return source
 
 def choose_encrypt_method():
+    # map UI keys to actual module filenames (important: zlib -> zlib_compressor)
     options = [
         ("base64", "Base64"),
         ("hash", "Hash"),
         ("marshall", "Marshall"),
-        ("zlib", "Zlib"),
+        ("zlib_compressor", "Zlib"),
         ("all", "All (recommended)")
     ]
-    display = []
+    # print colored header so palette visible, but pass plain labels to pick (pick can mis-handle ANSI)
+    print()
+    print(_col("Select encrypt method (use arrow keys):", 0))
     for i, (_, label) in enumerate(options):
-        display.append(_color_text(label, i))
+        print(_col(f"  {i+1}) {label}", i))
+    labels = [label for _, label in options]
     try:
-        _, index = pick(display, "Select encrypt method:", indicator="=>")
+        _, index = pick(labels, "Choose:", indicator="=>")
     except Exception as e:
         print(f"[!] pick failed: {e}")
         return None
@@ -88,11 +92,10 @@ def choose_encrypt_method():
 
 def yes_no_prompt(prompt_text):
     labels = ["Yes", "No"]
-    display = [_color_text("Yes", 0), _color_text("No", 1)]
+    display = [_col("Yes",0), _col("No",1)]
     try:
-        _, idx = pick(display, prompt_text, indicator="=>")
+        _, idx = pick(labels, prompt_text, indicator="=>")
     except Exception:
-        # fallback to simple input if pick unexpectedly fails
         while True:
             try:
                 r = input(f"{prompt_text} (y/n): ").strip().lower()
@@ -102,6 +105,7 @@ def yes_no_prompt(prompt_text):
                 return True
             if r in ("n","no"):
                 return False
+        return False
     return idx == 0
 
 def start_menu():
@@ -129,7 +133,9 @@ def start_menu():
         print(f"Cannot read file: {e}")
         return
 
+    # pipeline: variable_content_hider FIRST as you asked, then comment_remover, optional print_hider, var/class randomizers, encrypt, comment_adder
     data = src
+    data = apply_module_safe(data, "variable_content_hider")
     data = apply_module_safe(data, "comment_remover")
     yn = yes_no_prompt("Remove all print() calls?")
     if yn:
@@ -139,7 +145,7 @@ def start_menu():
 
     encrypt_order = []
     if method == "all":
-        encrypt_order = ["base64", "hash", "marshall", "zlib"]
+        encrypt_order = ["base64", "hash", "marshall", "zlib_compressor"]
     else:
         encrypt_order = [method]
 
@@ -156,5 +162,5 @@ def start_menu():
         print(f"Cannot write result: {e}")
         return
 
-    final_msg = _color_text(f"Obfuscated file written to: {out_path}", 0) if Style else f"Obfuscated file written to: {out_path}"
+    final_msg = _col(f"Obfuscated file written to: {out_path}", 0) if Style else f"Obfuscated file written to: {out_path}"
     print(final_msg)
