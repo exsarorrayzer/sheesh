@@ -33,7 +33,7 @@ PALETTE = [
 def _ansi_rgb(r, g, b):
     return f"\033[38;2;{r};{g};{b}m"
 
-def _color_label(text, idx):
+def _color_text(text, idx):
     if Style is None:
         return text
     r, g, b = PALETTE[idx % len(PALETTE)]
@@ -76,17 +76,38 @@ def choose_encrypt_method():
         ("zlib", "Zlib"),
         ("all", "All (recommended)")
     ]
-    labels = [_color_label(lbl, i) for i, (_, lbl) in enumerate(options)]
-    _, index = pick(labels, "Select encrypt method:", indicator="=>")
+    display = []
+    for i, (_, label) in enumerate(options):
+        display.append(_color_text(label, i))
+    try:
+        _, index = pick(display, "Select encrypt method:", indicator="=>")
+    except Exception as e:
+        print(f"[!] pick failed: {e}")
+        return None
     return options[index][0]
 
 def yes_no_prompt(prompt_text):
-    labels = [_color_label("Yes", 0), _color_label("No", 1)]
-    _, idx = pick(labels, prompt_text, indicator="=>")
+    labels = ["Yes", "No"]
+    display = [_color_text("Yes", 0), _color_text("No", 1)]
+    try:
+        _, idx = pick(display, prompt_text, indicator="=>")
+    except Exception:
+        # fallback to simple input if pick unexpectedly fails
+        while True:
+            try:
+                r = input(f"{prompt_text} (y/n): ").strip().lower()
+            except (EOFError, KeyboardInterrupt):
+                return False
+            if r in ("y","yes"):
+                return True
+            if r in ("n","no"):
+                return False
     return idx == 0
 
 def start_menu():
     method = choose_encrypt_method()
+    if method is None:
+        return
     try:
         file_path = input("Path to .py file to obfuscate: ").strip()
     except (EOFError, KeyboardInterrupt):
@@ -134,4 +155,6 @@ def start_menu():
     except Exception as e:
         print(f"Cannot write result: {e}")
         return
-    print(f"Obfuscated file written to: {out_path}")
+
+    final_msg = _color_text(f"Obfuscated file written to: {out_path}", 0) if Style else f"Obfuscated file written to: {out_path}"
+    print(final_msg)
