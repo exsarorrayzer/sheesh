@@ -1,22 +1,21 @@
-# obsufucators/comment_adder.py
-import hashlib
 import random
 import string
 import time
 
 random.seed(time.time_ns())
 
-def _random_str(min_len=16, max_len=32):
-    length = random.randint(min_len, max_len)
-    return ''.join(random.choices(string.ascii_letters, k=length))
+def _rand128():
+    return ''.join(random.choices(string.ascii_letters, k=128))
 
 def obfuscate(source: str) -> str:
-    new_lines = []
+    out_lines = []
     for line in source.splitlines():
+        out_lines.append(line)
         if not line.strip():
-            new_lines.append(line)
             continue
-        rand_text = _random_str()
-        md5_hash = hashlib.md5(rand_text.encode()).hexdigest()
-        new_lines.append(f"{line}  # {md5_hash}")
-    return "\n".join(new_lines)
+        block = _rand128()
+        chunk_size = 8
+        chunks = [block[i:i+chunk_size] for i in range(0, 128, chunk_size)]
+        for ch in chunks:
+            out_lines.append(f"# {ch}")
+    return "\n".join(out_lines)
