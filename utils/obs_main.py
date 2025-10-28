@@ -1,4 +1,5 @@
 import sys
+import os
 from pathlib import Path
 from importlib import util
 
@@ -8,11 +9,35 @@ except Exception:
     print("[!] 'pick' is required for arrow-key menu. Install via: pip install pick")
     sys.exit(1)
 
+try:
+    from colorama import init as _cinit, Style
+    _cinit()
+except Exception:
+    Style = None
+
 BASE = Path(__file__).resolve().parent.parent
 OBF_DIR = BASE / "obsufucators"
 RESULT_DIR = BASE.parent / "result"
 if not RESULT_DIR.exists():
     RESULT_DIR.mkdir(parents=True, exist_ok=True)
+
+PALETTE = [
+    (255, 10, 10),
+    (235, 30, 30),
+    (210, 20, 20),
+    (255, 40, 20),
+    (240, 5, 5),
+    (255, 80, 20)
+]
+
+def _ansi_rgb(r, g, b):
+    return f"\033[38;2;{r};{g};{b}m"
+
+def _color_label(text, idx):
+    if Style is None:
+        return text
+    r, g, b = PALETTE[idx % len(PALETTE)]
+    return f"{_ansi_rgb(r,g,b)}{text}{Style.RESET_ALL}"
 
 def discover_module(name):
     path = OBF_DIR / f"{name}.py"
@@ -51,12 +76,12 @@ def choose_encrypt_method():
         ("zlib", "Zlib"),
         ("all", "All (recommended)")
     ]
-    labels = [lbl for _, lbl in options]
-    option, index = pick(labels, "Select encrypt method:", indicator="=>")
+    labels = [_color_label(lbl, i) for i, (_, lbl) in enumerate(options)]
+    _, index = pick(labels, "Select encrypt method:", indicator="=>")
     return options[index][0]
 
 def yes_no_prompt(prompt_text):
-    labels = ["Yes", "No"]
+    labels = [_color_label("Yes", 0), _color_label("No", 1)]
     _, idx = pick(labels, prompt_text, indicator="=>")
     return idx == 0
 
@@ -68,8 +93,9 @@ def start_menu():
         return
     if not file_path:
         return
+    file_path = os.path.expanduser(file_path)
     try:
-        fp = Path(file_path).expanduser().resolve()
+        fp = Path(file_path).resolve()
     except Exception:
         print("Invalid path")
         return
@@ -82,15 +108,13 @@ def start_menu():
         print(f"Cannot read file: {e}")
         return
 
-    pipeline = [
-        "comment_remover",
-        "variable_randomizer",
-        "class_randomizer",
-        "comment_adder"
-    ]
     data = src
-    for mod in pipeline:
-        data = apply_module_safe(data, mod)
+    data = apply_module_safe(data, "comment_remover")
+    yn = yes_no_prompt("Remove all print() calls?")
+    if yn:
+        data = apply_module_safe(data, "print_hider")
+    data = apply_module_safe(data, "variable_randomizer")
+    data = apply_module_safe(data, "class_randomizer")
 
     encrypt_order = []
     if method == "all":
@@ -101,9 +125,7 @@ def start_menu():
     for enc in encrypt_order:
         data = apply_module_safe(data, enc)
 
-    yn = yes_no_prompt("Remove all print() calls?")
-    if yn:
-        data = apply_module_safe(data, "print_hider")
+    data = apply_module_safe(data, "comment_adder")
 
     out_name = f"{fp.stem}_enc.py"
     out_path = RESULT_DIR / out_name
