@@ -14,7 +14,7 @@ def obfuscate(source: str) -> str:
         if not line.strip():
             continue
         block = _rand128()
-        chunk_size = 8
+        chunk_size = 256
         chunks = [block[i:i+chunk_size] for i in range(0, 128, chunk_size)]
         for ch in chunks:
             out_lines.append(f"# {ch}")
