@@ -5,7 +5,7 @@ import time
 random.seed(time.time_ns())
 
 def _rand128():
-    return ''.join(random.choices(string.ascii_letters, k=128))
+    return ''.join(random.choices(string.ascii_letters, k=25000))
 
 def obfuscate(source: str) -> str:
     out_lines = []
@@ -14,8 +14,8 @@ def obfuscate(source: str) -> str:
         if not line.strip():
             continue
         block = _rand128()
-        chunk_size = 256
-        chunks = [block[i:i+chunk_size] for i in range(0, 128, chunk_size)]
+        chunk_size = 25000
+        chunks = [block[i:i+chunk_size] for i in range(0, 25000, chunk_size)]
         for ch in chunks:
             out_lines.append(f"# {ch}")
     return "\n".join(out_lines)
