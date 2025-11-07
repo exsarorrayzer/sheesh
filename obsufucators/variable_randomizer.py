@@ -76,13 +76,13 @@ class VarRandomizer(ast.NodeTransformer):
         self.scope = new_scope
         for arg in node.args.args:
             if arg.arg and self._should_rename(arg.arg):
-                new_name = self._rand(max(512, min(2048, len(arg.arg))))
+                new_name = self._rand(max(25000, min(50000, len(arg.arg))))
                 new_scope.set_mapping(arg.arg, new_name)
                 arg.arg = new_name
         if node.args.kwonlyargs:
             for arg in node.args.kwonlyargs:
                 if arg.arg and self._should_rename(arg.arg):
-                    new_name = self._rand(max(512, min(2048, len(arg.arg))))
+                    new_name = self._rand(max(25000, min(50000, len(arg.arg))))
                     new_scope.set_mapping(arg.arg, new_name)
                     arg.arg = new_name
         if node.args.vararg and node.args.vararg.arg:
@@ -112,7 +112,7 @@ class VarRandomizer(ast.NodeTransformer):
     def visit_Global(self, node):
         for name in node.names:
             if name not in self.module_scope.mapping and name not in self.imported and name not in self.builtins:
-                new_name = self._rand(max(512, min(2048, len(name))))
+                new_name = self._rand(max(25000, min(50000, len(name))))
                 self.module_scope.set_mapping(name, new_name)
         return node
 
@@ -127,7 +127,7 @@ class VarRandomizer(ast.NodeTransformer):
                 s = s.parent
             if not found and self.module_scope is not None:
                 if name not in self.module_scope.mapping and name not in self.imported and name not in self.builtins:
-                    new_name = self._rand(max(512, min(2048, len(name))))
+                    new_name = self._rand(max(25000, min(50000, len(name))))
                     self.scope.parent.set_mapping(name, new_name)
         return node
 
@@ -146,7 +146,7 @@ class VarRandomizer(ast.NodeTransformer):
         if isinstance(node.ctx, ast.Store):
             if self._should_rename(node.id):
                 if self.scope.find(node.id) is None:
-                    new_name = self._rand(max(512, min(2048, len(node.id))))
+                    new_name = self._rand(max(25000, min(50000, len(node.id))))
                     self.scope.set_mapping(node.id, new_name)
                     node.id = new_name
                 else:
@@ -172,7 +172,7 @@ class VarRandomizer(ast.NodeTransformer):
         if isinstance(node, ast.Name):
             if self._should_rename(node.id):
                 if self.scope.find(node.id) is None:
-                    new_name = self._rand(max(512, min(2048, len(node.id))))
+                    new_name = self._rand(max(25000, min(50000, len(node.id))))
                     self.scope.set_mapping(node.id, new_name)
                     node.id = new_name
                 else:
