@@ -28,7 +28,7 @@ class ClassRandomizer(ast.NodeTransformer):
     def visit_ClassDef(self, node):
         old_name = node.name
         if old_name not in self.imported and old_name not in self.builtins:
-            new_name = self._rand(max(6, min(12, len(old_name))))
+            new_name = self._rand(max(512, min(256, len(old_name))))
             self.mapping[old_name] = new_name
             node.name = new_name
         self.generic_visit(node)
