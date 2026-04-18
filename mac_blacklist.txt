@@ -1,0 +1,56 @@
+
+# --- VMware ---
+00:05:69
+00:0c:29
+00:1c:14
+00:50:56
+
+# --- VirtualBox (Oracle) ---
+08:00:27
+
+# --- Microsoft Hyper-V & Virtual PC ---
+00:15:5d
+00:03:ff
+
+# --- Parallels Desktop ---
+00:1c:42
+
+# --- Xen / QEMU / KVM ---
+00:16:3e
+52:54:00
+54:52:00
+
+# --- Docker (Virtual Ethernet) ---
+# Eger dosyanızın Docker'da çalışmasını istemiyorsanız aktif bırakın.
+02:42:ac
+02:42:c0
+
+# --- Bhyve (FreeBSD Hypervisor) ---
+00:a0:98
+
+# --- Sandboxie / Cuckoo Sandbox (Genel Ağlar) ---
+00:12:34
+00:ff:ff
+
+9e:bd:6a:80:b2:26  
+d6:58:d9:e0:9e:40
+4e:27:df:b4:c2:9a  
+26:55:0f:11:71:c6  
+8a:f0:c3:7d:00:30
+00:50:56
+00:0c:29
+02-00-00
+
+00:50:56 # VMware - ESXi/vSphere
+00:0C:29 # VMware - Workstation/Fusion
+00:05:69 # VMware - vSphere/ESX Legacy
+00:15:5D # Microsoft - Hyper-V
+08:00:27 # Oracle - VirtualBox
+52:54:00 # QEMU/Red Hat - KVM/Proxmox
+00:16:3E # Xen Project - Citrix/Oracle VM
+00:1C:42 # Parallels - Desktop for Mac
+00:03:FF # Microsoft - Virtual PC/Connectix
+00:16:D1 # Huawei - FusionCompute
+00:12:17 # Citrix - XenServer (Eski)
+00:0F:4B # Virtual Iron - Virtual Iron Software
+
